@@ -35,6 +35,7 @@ export interface AppNotification {
   category: EventCategory;
   userId?: string | null;
   eventId?: string;
+  audience?: string | null;
 }
 
 export interface Comment {

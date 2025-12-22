@@ -107,6 +107,7 @@ const App: React.FC = () => {
 
     if (!user.isDeveloper) {
       query = query.or(`userId.is.null,userId.eq.${user.id}`);
+      query = query.neq('audience', 'dev');
     }
 
     const { data, error } = await query;
@@ -124,6 +125,7 @@ const App: React.FC = () => {
 
       if (!user.isDeveloper) {
         query = query.or(`userId.is.null,userId.eq.${user.id}`);
+        query = query.neq('audience', 'dev');
       }
 
       const { error } = await query;
@@ -142,6 +144,7 @@ const App: React.FC = () => {
 
       if (!user.isDeveloper) {
         query = query.eq('userId', user.id);
+        query = query.neq('audience', 'dev');
       }
 
       const { error } = await query;
@@ -154,6 +157,27 @@ const App: React.FC = () => {
     } catch (err) {
       console.error("Erro ao limpar notifica??es:", err);
     }
+  };
+
+  const getChangedFields = (prevEvent: ShiftEvent, nextEvent: any) => {
+    const normalize = (value: any) => JSON.stringify(value ?? null);
+    const fields = [
+      { key: 'title', label: 'titulo' },
+      { key: 'description', label: 'descricao' },
+      { key: 'solution', label: 'solucao' },
+      { key: 'impact', label: 'impacto' },
+      { key: 'downtime', label: 'parada' },
+      { key: 'releaseTime', label: 'liberacao' },
+      { key: 'line', label: 'linha' },
+      { key: 'shift', label: 'turno' },
+      { key: 'category', label: 'categoria' },
+      { key: 'equipmentSubtype', label: 'modelo' },
+      { key: 'photos', label: 'fotos' }
+    ];
+
+    return fields
+      .filter(({ key }) => normalize((prevEvent as any)[key]) !== normalize((nextEvent as any)[key]))
+      .map(({ label }) => label);
   };
 
   const handleSaveEvent = async (eventData: any) => {
@@ -169,6 +193,20 @@ const App: React.FC = () => {
         const { error } = await supabase.from('events').update(updatePayload).eq('id', eventToEdit.id);
         if (error) throw error;
         setEvents(prev => prev.map(e => e.id === eventToEdit.id ? { ...e, ...updatePayload } : e));
+        const changedFields = getChangedFields(eventToEdit, eventData);
+        if (changedFields.length > 0) {
+          const editNotification = {
+            id: crypto.randomUUID(),
+            title: "Evento editado",
+            message: `${user.name} editou "${eventData.title || eventToEdit.title}". Campos: ${changedFields.join(', ')}.`,
+            timestamp: Date.now(),
+            isRead: false,
+            category: eventData.category || eventToEdit.category,
+            audience: 'dev',
+            eventId: eventToEdit.id
+          };
+          await supabase.from('notifications').insert([editNotification]);
+        }
         setEventToEdit(null);
         alert('Relatório atualizado com sucesso!');
       } catch (err) { alert('Erro ao atualizar.'); }
@@ -229,7 +267,18 @@ const App: React.FC = () => {
       
       setEvents(prev => prev.filter(e => e.id !== id));
       setSelectedEventId(null);
-      alert("Relatório excluído.");
+      const deleteNotification = {
+        id: crypto.randomUUID(),
+        title: "Evento excluido",
+        message: `${user.name} excluiu "${event.title}" (${event.category}, ${event.shift}).`,
+        timestamp: Date.now(),
+        isRead: false,
+        category: event.category,
+        audience: 'dev',
+        eventId: event.id
+      };
+      await supabase.from('notifications').insert([deleteNotification]);
+      alert("Relatorio excluido.");
     } catch (err) {
       alert("Erro ao excluir.");
     }
@@ -434,6 +483,9 @@ const FilterChip = ({ active, onClick, children }: any) => (
 );
 
 export default App;
+
+
+
 
 
 
