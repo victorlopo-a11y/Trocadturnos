@@ -206,6 +206,9 @@ const App: React.FC = () => {
             eventId: eventToEdit.id
           };
           await supabase.from('notifications').insert([editNotification]);
+          if (user.isDeveloper) {
+            setNotifications(prev => [editNotification as AppNotification, ...prev]);
+          }
         }
         setEventToEdit(null);
         alert('Relatório atualizado com sucesso!');
@@ -278,6 +281,9 @@ const App: React.FC = () => {
         eventId: event.id
       };
       await supabase.from('notifications').insert([deleteNotification]);
+      if (user.isDeveloper) {
+        setNotifications(prev => [deleteNotification as AppNotification, ...prev]);
+      }
       alert("Relatorio excluido.");
     } catch (err) {
       alert("Erro ao excluir.");
@@ -355,9 +361,13 @@ const App: React.FC = () => {
           
           <div className="relative" ref={notificationRef}>
             <button 
-              onClick={() => {
-                setIsNotificationOpen(!isNotificationOpen);
-                if (!isNotificationOpen && unreadCount > 0) markAllAsRead();
+              onClick={async () => {
+                const nextOpen = !isNotificationOpen;
+                setIsNotificationOpen(nextOpen);
+                if (nextOpen) {
+                  await fetchNotifications();
+                  await markAllAsRead();
+                }
               }} 
               className={`p-2.5 rounded-xl transition-all relative ${isNotificationOpen ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20' : 'text-slate-400 hover:bg-slate-50'}`}
             >
