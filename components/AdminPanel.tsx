@@ -113,56 +113,39 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           <button onClick={onClose} className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-2xl shadow-sm text-slate-400 hover:text-red-500 transition-all">
             <X size={24} />
           </button>
-        </div>
-
-        <div className="px-8 py-4 border-b border-slate-50 dark:border-slate-800 flex items-center gap-2">
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-          >
-            Equipe
-          </button>
-          <button
-            onClick={() => setActiveTab('audit')}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'audit' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-          >
-            Auditoria
-          </button>
-        </div>
-
-        {/* Busca */}
-        {activeTab === 'users' && (
-          <div className="px-8 py-4 border-b border-slate-50 dark:border-slate-800">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={20} />
-              <input 
-                type="text" 
-                placeholder="Buscar usuǭrio por nome ou ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 dark:text-white font-bold"
-              />
+        </div>\n        {/* Busca */}
+        <div className="px-8 py-4 border-b border-slate-50 dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
+              >
+                Equipe
+              </button>
+              <button
+                onClick={() => setActiveTab('audit')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'audit' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
+              >
+                Auditoria
+              </button>
             </div>
+            {activeTab === 'users' && (
+              <div className="relative group flex-1 min-w-[220px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="Buscar usuario por nome ou ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 dark:text-white font-bold"
+                />
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Lista de Usuǭrios */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <div className="mb-4 flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-            >
-              Equipe
-            </button>
-            <button
-              onClick={() => setActiveTab('audit')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'audit' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-            >
-              Auditoria
-            </button>
-          </div>
-          {activeTab === 'users' && isLoading ? (
+        </div>
+{/* Lista de Usuǭrios */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">\n          {activeTab === 'users' && isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carregando usuǭrios...</p>
