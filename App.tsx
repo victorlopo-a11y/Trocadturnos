@@ -303,7 +303,7 @@ const App: React.FC = () => {
       const newNotification = {
         id: crypto.randomUUID(),
         title: "Novo comentario",
-        message: `${user.name} comentou em ${targetEvent.title}`,
+        message: `${user.name} comentou no seu registro: ${targetEvent.title}`,
         timestamp: Date.now(),
         isRead: false,
         category: targetEvent.category,
