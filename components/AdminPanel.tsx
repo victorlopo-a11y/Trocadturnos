@@ -76,14 +76,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   };
 
   const handleDeleteUser = async (username: string) => {
-    if (confirm(`Tem certeza que deseja excluir o usuário ${username}? Esta ação é irreversível.`)) {
+    if (confirm(`Tem certeza que deseja excluir o usuario ${username}? Esta acao e irreversivel.`)) {
       const { error } = await supabase
         .from('users')
         .delete()
         .eq('username', username);
 
       if (error) {
-        alert('Erro ao excluir usuário. Verifique as permissões RLS.');
+        alert('Erro ao excluir usuario. Verifique as permissoes RLS.');
       } else {
         setUsers(users.filter(u => u.username !== username));
       }
@@ -106,14 +106,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
               <ShieldCheck size={28} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-slate-800 dark:text-white">Gestǜo de Equipe</h2>
+              <h2 className="text-2xl font-black text-slate-800 dark:text-white">Gestao de Equipe</h2>
               <p className="text-xs text-slate-400 font-black uppercase tracking-widest">Controle de Acesso via Supabase</p>
             </div>
           </div>
           <button onClick={onClose} className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-2xl shadow-sm text-slate-400 hover:text-red-500 transition-all">
             <X size={24} />
           </button>
-        </div>\n        {/* Busca */}
+        </div>        {/* Busca */}
         <div className="px-8 py-4 border-b border-slate-50 dark:border-slate-800">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
@@ -144,11 +144,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
             )}
           </div>
         </div>
-{/* Lista de Usuǭrios */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">\n          {activeTab === 'users' && isLoading ? (
+{/* Lista de Usuarios */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">          {activeTab === 'users' && isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carregando usuǭrios...</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carregando usuarios...</p>
             </div>
           ) : activeTab === 'users' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -178,13 +178,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                         >
                           <option value="Setup Engenharia">Setup Engenharia</option>
                           <option value="Engenharia de Processos">Engenharia de Processos</option>
-                          <option value="Manuten��ǜo / Mǭquinas">Manuten��ǜo / Mǭquinas</option>
+                          <option value="Manutencao / Maquinas">Manutencao / Maquinas</option>
                         </select>
                       </div>
                       <button 
                         onClick={() => handleDeleteUser(user.username)}
                         className="p-3 bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all"
-                        title="Excluir Usuǭrio"
+                        title="Excluir Usuario"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -192,7 +192,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
                   )}
                   {user.is_developer && (
                      <div className="w-full py-3 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-xl text-center border border-indigo-200 dark:border-indigo-800">
-                        Usuǭrio Master Inviolǭvel
+                        Usuario Master Inviolavel
                      </div>
                   )}
                 </div>
