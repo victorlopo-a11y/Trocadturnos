@@ -76,18 +76,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   };
 
   const handleDeleteUser = async (username: string) => {
-    if (confirm(`Tem certeza que deseja excluir o usuario ${username}? Esta acao e irreversivel.`)) {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('username', username);
-
-      if (error) {
-        alert('Erro ao excluir usuario. Verifique as permissoes RLS.');
-      } else {
-        setUsers(users.filter(u => u.username !== username));
-      }
+    if (!confirm(`Tem certeza que deseja excluir o usuario ${username}? Esta acao e irreversivel.`)) {
+      return;
     }
+
+    const { data, error } = await supabase
+      .from('users')
+      .delete()
+      .eq('username', username)
+      .select('username');
+
+    if (error) {
+      alert('Erro ao excluir usuario. Verifique as permissoes RLS.');
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      alert('Nao foi possivel excluir o usuario.');
+      return;
+    }
+
+    setUsers(users.filter(u => u.username !== username));
+    await fetchUsers();
   };
 
   const filteredUsers = users.filter(u => 
