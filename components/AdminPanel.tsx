@@ -106,27 +106,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
               <ShieldCheck size={28} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-slate-800 dark:text-white">Gestão de Equipe</h2>
+              <h2 className="text-2xl font-black text-slate-800 dark:text-white">Gestǜo de Equipe</h2>
               <p className="text-xs text-slate-400 font-black uppercase tracking-widest">Controle de Acesso via Supabase</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-            >
-              Equipe
-            </button>
-            <button
-              onClick={() => setActiveTab('audit')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'audit' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-            >
-              Auditoria
-            </button>
-            <button onClick={onClose} className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-2xl shadow-sm text-slate-400 hover:text-red-500 transition-all">
-              <X size={24} />
-            </button>
-          </div>
+          <button onClick={onClose} className="p-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-2xl shadow-sm text-slate-400 hover:text-red-500 transition-all">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="px-8 py-4 border-b border-slate-50 dark:border-slate-800 flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
+          >
+            Equipe
+          </button>
+          <button
+            onClick={() => setActiveTab('audit')}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'audit' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
+          >
+            Auditoria
+          </button>
         </div>
 
         {/* Busca */}
