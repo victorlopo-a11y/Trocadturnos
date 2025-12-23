@@ -107,7 +107,7 @@ const App: React.FC = () => {
 
     if (!user.isDeveloper) {
       query = query.or(`userId.is.null,userId.eq.${user.id}`);
-      query = query.neq('audience', 'dev');
+      query = query.or('audience.is.null,audience.neq.dev');
     }
 
     const { data, error } = await query;
@@ -125,7 +125,7 @@ const App: React.FC = () => {
 
       if (!user.isDeveloper) {
         query = query.or(`userId.is.null,userId.eq.${user.id}`);
-        query = query.neq('audience', 'dev');
+        query = query.or('audience.is.null,audience.neq.dev');
       }
 
       const { error } = await query;
@@ -144,7 +144,7 @@ const App: React.FC = () => {
 
       if (!user.isDeveloper) {
         query = query.eq('userId', user.id);
-        query = query.neq('audience', 'dev');
+        query = query.or('audience.is.null,audience.neq.dev');
       }
 
       const { error } = await query;
