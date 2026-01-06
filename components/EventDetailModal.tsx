@@ -11,13 +11,14 @@ interface EventDetailModalProps {
   canEdit: boolean;
   canDelete: boolean;
   editDisabledReason?: string;
+  canViewHistory?: boolean;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onAddComment: (eventId: string, text: string) => void;
 }
 
-const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, canDelete, editDisabledReason, onClose, onEdit, onDelete, onAddComment }) => {
+const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, canDelete, editDisabledReason, canViewHistory, onClose, onEdit, onDelete, onAddComment }) => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
 
@@ -119,7 +120,33 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, can
               )}
             </div>
 
-            <div className="bg-slate-50/30 dark:bg-slate-900/50 flex flex-col">
+              {canViewHistory && event.editHistory && event.editHistory.length > 0 && (
+                <Section title="Historico de edicoes" icon={<History size={16} />}>
+                  <div className="space-y-3">
+                    {event.editHistory.slice().reverse().map((entry, index) => (
+                      <div key={`${entry.editedAt}-${index}`} className="bg-white dark:bg-slate-800/50 border dark:border-slate-700 rounded-xl p-4">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          {entry.editedBy} em {format(entry.editedAt, "d/MM 'اs' HH:mm", { locale: ptBR })}
+                        </p>
+                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                          {entry.prev.title && <p><span className="font-bold">Titulo:</span> {entry.prev.title}</p>}
+                          {entry.prev.description && <p><span className="font-bold">Descricao:</span> {entry.prev.description}</p>}
+                          {entry.prev.solution && <p><span className="font-bold">Solucao:</span> {entry.prev.solution}</p>}
+                          {entry.prev.impact && <p><span className="font-bold">Impacto:</span> {entry.prev.impact}</p>}
+                          {entry.prev.downtime !== undefined && <p><span className="font-bold">Parada:</span> {entry.prev.downtime} min</p>}
+                          {entry.prev.releaseTime && <p><span className="font-bold">Liberacao:</span> {entry.prev.releaseTime}</p>}
+                          {entry.prev.line && <p><span className="font-bold">Linha:</span> {entry.prev.line}</p>}
+                          {entry.prev.shift && <p><span className="font-bold">Turno:</span> {entry.prev.shift}</p>}
+                          {entry.prev.category && <p><span className="font-bold">Categoria:</span> {entry.prev.category}</p>}
+                          {entry.prev.equipmentSubtype && <p><span className="font-bold">Modelo:</span> {entry.prev.equipmentSubtype}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              <div className="bg-slate-50/30 dark:bg-slate-900/50 flex flex-col">
               <div className="p-6 border-b dark:border-slate-800 flex items-center gap-2"><MessageSquare size={16} className="text-indigo-600" /><h3 className="text-xs font-black uppercase tracking-widest">Mural</h3></div>
               <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                 {event.comments && event.comments.length > 0 ? event.comments.map(c => (

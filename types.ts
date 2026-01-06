@@ -61,6 +61,11 @@ export interface ShiftEvent {
   photos?: string[];
   equipmentSubtype?: string;
   editCount?: number;
+  editHistory?: Array<{
+    editedBy: string;
+    editedAt: number;
+    prev: Partial<ShiftEvent>;
+  }>;
   userId: string;
   userName: string;
   sector: string;

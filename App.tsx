@@ -190,11 +190,29 @@ const App: React.FC = () => {
         alert('Limite de 2 edições por evento atingido.');
         return;
       }
+      const historyEntry = {
+        editedBy: user.name,
+        editedAt: Date.now(),
+        prev: {
+          title: eventToEdit.title,
+          description: eventToEdit.description,
+          solution: eventToEdit.solution,
+          impact: eventToEdit.impact,
+          downtime: eventToEdit.downtime,
+          releaseTime: eventToEdit.releaseTime,
+          line: eventToEdit.line,
+          shift: eventToEdit.shift,
+          category: eventToEdit.category,
+          equipmentSubtype: eventToEdit.equipmentSubtype,
+          photos: eventToEdit.photos
+        }
+      };
       const updatePayload = {
         ...eventData,
         lastEditedBy: user.name,
         lastEditedAt: Date.now(),
-        editCount: currentEditCount + 1
+        editCount: currentEditCount + 1,
+        editHistory: [...(eventToEdit.editHistory || []), historyEntry]
       };
       try {
         const { error } = await supabase.from('events').update(updatePayload).eq('id', eventToEdit.id);
@@ -530,6 +548,7 @@ const App: React.FC = () => {
         canEdit={!!selectedEvent && canEditEvent}
         canDelete={!!selectedEvent && canDeleteEvent}
         editDisabledReason={editDisabledReason}
+        canViewHistory={!!user?.isDeveloper}
         onClose={() => setSelectedEventId(null)} 
         onEdit={() => { if(selectedEvent) { setEventToEdit(selectedEvent); setIsModalOpen(true); setSelectedEventId(null); } }}
         onDelete={() => { if(selectedEvent) handleDeleteEvent(selectedEvent.id); }}
