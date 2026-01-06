@@ -321,6 +321,34 @@ const App: React.FC = () => {
     localStorage.setItem('eng_control_darkmode', darkMode.toString());
   }, [darkMode]);
 
+  useEffect(() => {
+    if (!user) return;
+    let isActive = true;
+
+    const pingBackend = async () => {
+      const { error } = await supabase
+        .from('events')
+        .select('id')
+        .limit(1);
+      if (error && isActive) {
+        console.warn('Keepalive falhou:', error.message);
+      }
+    };
+
+    const intervalMs = 10 * 60 * 1000;
+    pingBackend();
+    const keepAliveId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        pingBackend();
+      }
+    }, intervalMs);
+
+    return () => {
+      isActive = false;
+      clearInterval(keepAliveId);
+    };
+  }, [user]);
+
   const selectedEvent = useMemo(() => events.find(e => e.id === selectedEventId) || null, [events, selectedEventId]);
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
   const filteredEvents = useMemo(() => events.filter(e => (selectedShiftFilter === 'Todos' || e.shift === selectedShiftFilter) && e.date === selectedDate), [events, selectedShiftFilter, selectedDate]);
