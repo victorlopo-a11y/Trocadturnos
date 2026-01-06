@@ -49,6 +49,7 @@ const App: React.FC = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedShiftFilter, setSelectedShiftFilter] = useState<'Todos' | ShiftType>('Todos');
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('eng_control_darkmode') === 'true');
 
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -366,7 +367,13 @@ const App: React.FC = () => {
   const canDeleteEvent = !!user?.isDeveloper;
   const editDisabledReason = editLimitReached ? 'Limite de 2 edições por evento atingido' : undefined;
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
-  const filteredEvents = useMemo(() => events.filter(e => (selectedShiftFilter === 'Todos' || e.shift === selectedShiftFilter) && e.date === selectedDate), [events, selectedShiftFilter, selectedDate]);
+  const filteredEvents = useMemo(() => {
+    const matchesShift = (event: ShiftEvent) => selectedShiftFilter === 'Todos' || event.shift === selectedShiftFilter;
+    if (showAllEvents && user?.isDeveloper) {
+      return events.filter(matchesShift);
+    }
+    return events.filter(e => matchesShift(e) && e.date === selectedDate);
+  }, [events, selectedShiftFilter, selectedDate, showAllEvents, user]);
 
   const stats = useMemo(() => {
     const today = events.filter(e => e.date === selectedDate);
@@ -483,6 +490,14 @@ const App: React.FC = () => {
         <section className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div className="flex flex-wrap items-center gap-4">
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="px-5 py-3.5 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl font-black text-sm outline-none transition-all focus:ring-4 focus:ring-indigo-500/10" />
+            {user?.isDeveloper && (
+              <button
+                onClick={() => setShowAllEvents(!showAllEvents)}
+                className={`px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${showAllEvents ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-slate-400 border border-slate-200 hover:text-emerald-600'}`}
+              >
+                {showAllEvents ? 'Mostrando tudo' : 'Ver tudo'}
+              </button>
+            )}
             <div className="flex items-center gap-1 p-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl">
               <FilterChip active={selectedShiftFilter === 'Todos'} onClick={() => setSelectedShiftFilter('Todos')}>Todos</FilterChip>
               <FilterChip active={selectedShiftFilter === ShiftType.ADM} onClick={() => setSelectedShiftFilter(ShiftType.ADM)}>ADM</FilterChip>
