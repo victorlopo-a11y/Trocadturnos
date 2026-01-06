@@ -60,6 +60,7 @@ export interface ShiftEvent {
   releaseTime?: string;
   photos?: string[];
   equipmentSubtype?: string;
+  editCount?: number;
   userId: string;
   userName: string;
   sector: string;

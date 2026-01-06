@@ -184,10 +184,16 @@ const App: React.FC = () => {
     if (!user) return;
     
     if (eventToEdit) {
+      const currentEditCount = eventToEdit.editCount ?? 0;
+      if (!user.isDeveloper && currentEditCount >= 2) {
+        alert('Limite de 2 edições por evento atingido.');
+        return;
+      }
       const updatePayload = {
         ...eventData,
         lastEditedBy: user.name,
-        lastEditedAt: Date.now()
+        lastEditedAt: Date.now(),
+        editCount: currentEditCount + 1
       };
       try {
         const { error } = await supabase.from('events').update(updatePayload).eq('id', eventToEdit.id);
@@ -222,7 +228,8 @@ const App: React.FC = () => {
         date: format(new Date(), 'yyyy-MM-dd'),
         userId: user.id,
         userName: user.name,
-        sector: user.role
+        sector: user.role,
+        editCount: 0
       };
 
       try {
@@ -256,8 +263,8 @@ const App: React.FC = () => {
     const event = events.find(e => e.id === id);
     if (!event || !user) return;
 
-    if (event.userId !== user.id && !user.isDeveloper) {
-      alert("Apenas o autor ou admin pode excluir.");
+    if (!user.isDeveloper) {
+      alert("Apenas admin pode excluir.");
       return;
     }
 
@@ -350,6 +357,11 @@ const App: React.FC = () => {
   }, [user]);
 
   const selectedEvent = useMemo(() => events.find(e => e.id === selectedEventId) || null, [events, selectedEventId]);
+  const selectedEventEditCount = selectedEvent?.editCount ?? 0;
+  const editLimitReached = !user?.isDeveloper && selectedEvent && selectedEvent.userId === user?.id && selectedEventEditCount >= 2;
+  const canEditEvent = !!user?.isDeveloper || (selectedEvent && selectedEvent.userId === user?.id && !editLimitReached);
+  const canDeleteEvent = !!user?.isDeveloper;
+  const editDisabledReason = editLimitReached ? 'Limite de 2 edições por evento atingido' : undefined;
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
   const filteredEvents = useMemo(() => events.filter(e => (selectedShiftFilter === 'Todos' || e.shift === selectedShiftFilter) && e.date === selectedDate), [events, selectedShiftFilter, selectedDate]);
 
@@ -497,7 +509,9 @@ const App: React.FC = () => {
       
       <EventDetailModal 
         event={selectedEvent} 
-        canManage={selectedEvent ? (selectedEvent.userId === user.id || user.isDeveloper) : false}
+        canEdit={!!selectedEvent && canEditEvent}
+        canDelete={!!selectedEvent && canDeleteEvent}
+        editDisabledReason={editDisabledReason}
         onClose={() => setSelectedEventId(null)} 
         onEdit={() => { if(selectedEvent) { setEventToEdit(selectedEvent); setIsModalOpen(true); setSelectedEventId(null); } }}
         onDelete={() => { if(selectedEvent) handleDeleteEvent(selectedEvent.id); }}
