@@ -306,7 +306,7 @@ const App: React.FC = () => {
       setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, comments: [...(ev.comments || []), newComment as Comment] } : ev));
     }
 
-    if (targetEvent && targetEvent.userId !== user.id) {
+    if (targetEvent) {
       const newNotification = {
         id: crypto.randomUUID(),
         title: "Novo comentario",
@@ -319,6 +319,9 @@ const App: React.FC = () => {
       };
 
       await supabase.from('notifications').insert([newNotification]);
+      if (targetEvent.userId === user.id) {
+        setNotifications(prev => [newNotification as AppNotification, ...prev]);
+      }
     }
   };
 
