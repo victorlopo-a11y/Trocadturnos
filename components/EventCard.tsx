@@ -51,6 +51,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Linha:</span>
             <span className="text-xs text-slate-700 dark:text-slate-200 font-black">{event.line}</span>
           </div>
+
+          {event.equipment && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Equipamento:</span>
+              <span className="text-xs text-slate-700 dark:text-slate-200 font-black">{event.equipment}</span>
+            </div>
+          )}
+
+          {event.product && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Produto:</span>
+              <span className="text-xs text-slate-700 dark:text-slate-200 font-black">{event.product}</span>
+            </div>
+          )}
           
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700">
             <span className={`${shiftMeta.color}`}>{shiftMeta.icon}</span>

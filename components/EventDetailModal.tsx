@@ -80,6 +80,8 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, can
             <div className="lg:col-span-2 p-8 overflow-y-auto space-y-8 border-r dark:border-slate-800 custom-scrollbar">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InfoItem icon={<Layout size={16} />} label="Linha" value={event.line} />
+                {event.equipment && <InfoItem icon={<Layout size={16} />} label="Equipamento" value={event.equipment} />}
+                {event.product && <InfoItem icon={<Layout size={16} />} label="Produto" value={event.product} />}
                 <InfoItem icon={<Clock size={16} />} label="Horário" value={format(event.timestamp, "HH:mm")} />
                 {event.downtime !== undefined && event.downtime > 0 && <InfoItem icon={<Clock size={16} />} label="Parada" value={`${event.downtime} min`} color="text-red-500" />}
                 {event.releaseTime ? <InfoItem icon={<Play size={16} />} label="Liberação" value={event.releaseTime} color="text-emerald-500" /> : event.equipmentSubtype && <InfoItem icon={<Search size={16} />} label="Modelo" value={event.equipmentSubtype} />}
@@ -136,6 +138,8 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, can
                           {entry.prev.downtime !== undefined && <p><span className="font-bold">Parada:</span> {entry.prev.downtime} min</p>}
                           {entry.prev.releaseTime && <p><span className="font-bold">Liberacao:</span> {entry.prev.releaseTime}</p>}
                           {entry.prev.line && <p><span className="font-bold">Linha:</span> {entry.prev.line}</p>}
+                          {entry.prev.equipment && <p><span className="font-bold">Equipamento:</span> {entry.prev.equipment}</p>}
+                          {entry.prev.product && <p><span className="font-bold">Produto:</span> {entry.prev.product}</p>}
                           {entry.prev.shift && <p><span className="font-bold">Turno:</span> {entry.prev.shift}</p>}
                           {entry.prev.category && <p><span className="font-bold">Categoria:</span> {entry.prev.category}</p>}
                           {entry.prev.equipmentSubtype && <p><span className="font-bold">Modelo:</span> {entry.prev.equipmentSubtype}</p>}

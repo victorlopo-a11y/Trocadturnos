@@ -51,6 +51,8 @@ export interface ShiftEvent {
   date: string;
   shift: ShiftType;
   line: string;
+  product?: string;
+  equipment?: string;
   category: EventCategory;
   title: string;
   description: string;

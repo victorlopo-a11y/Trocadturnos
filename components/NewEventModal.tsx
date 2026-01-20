@@ -16,6 +16,8 @@ interface NewEventModalProps {
 const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
   const [shift, setShift] = useState<ShiftType>(ShiftType.ADM);
   const [line, setLine] = useState('');
+  const [product, setProduct] = useState('');
+  const [equipment, setEquipment] = useState('');
   const [category, setCategory] = useState<EventCategory | null>(null);
   const [equipmentSubtype, setEquipmentSubtype] = useState('');
   const [title, setTitle] = useState('');
@@ -34,6 +36,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
       if (initialData) {
         setShift(initialData.shift);
         setLine(initialData.line);
+        setProduct(initialData.product || '');
+        setEquipment(initialData.equipment || '');
         setCategory(initialData.category);
         setEquipmentSubtype(initialData.equipmentSubtype || '');
         setTitle(initialData.title);
@@ -47,6 +51,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
         // Reset to defaults for a new record
         setShift(ShiftType.ADM);
         setLine('');
+        setProduct('');
+        setEquipment('');
         setCategory(null);
         setEquipmentSubtype('');
         setTitle('');
@@ -90,6 +96,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
     onSave({ 
       shift, 
       line, 
+      product: product || undefined,
+      equipment: equipment || undefined,
       category, 
       equipmentSubtype: isTechnicalCategory ? equipmentSubtype : undefined,
       title, 
@@ -139,15 +147,37 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Linha / Equipamento</label>
+              <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Linha</label>
               <input 
                 type="text" 
-                placeholder="Ex: Linha 1, Laser 04..."
+                placeholder="Ex: Linha 1"
                 value={line}
                 onChange={(e) => setLine(e.target.value)}
                 required
                 className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
               />
+              {line.trim() && (
+                <div className="pt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div>
+                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Equipamento</label>
+                    <input 
+                      type="text" 
+                      placeholder="Ex: Laser 04"
+                      value={equipment}
+                      onChange={(e) => setEquipment(e.target.value)}
+                      className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                    />
+                  </div>
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Produto</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Produto X"
+                    value={product}
+                    onChange={(e) => setProduct(e.target.value)}
+                    className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
