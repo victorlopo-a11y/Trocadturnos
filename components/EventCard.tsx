@@ -14,6 +14,17 @@ interface EventCardProps {
 const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
   const meta = EVENT_METADATA[event.category];
   const shiftMeta = SHIFT_METADATA[event.shift];
+  const getDurationMinutes = (start?: string, end?: string) => {
+    if (!start || !end) return null;
+    const [startHours, startMinutes] = start.split(':').map(Number);
+    const [endHours, endMinutes] = end.split(':').map(Number);
+    if ([startHours, startMinutes, endHours, endMinutes].some(Number.isNaN)) return null;
+    const startTotal = startHours * 60 + startMinutes;
+    const endTotal = endHours * 60 + endMinutes;
+    const diff = endTotal - startTotal;
+    return diff >= 0 ? diff : diff + 24 * 60;
+  };
+  const durationMinutes = getDurationMinutes(event.startTime, event.endTime);
 
   return (
     <div 
@@ -71,20 +82,27 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
             <span className="text-xs text-slate-700 dark:text-slate-200 font-black">{event.shift}</span>
           </div>
 
-          {/* Novos Campos: Downtime e Liberação */}
-          {event.downtime !== undefined && event.downtime > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-900/30">
-              <Clock size={14} className="text-red-500" />
-              <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Parada:</span>
-              <span className="text-xs text-red-600 dark:text-red-400 font-black">{event.downtime} min</span>
+          {event.startTime && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+              <Clock size={14} className="text-amber-500" />
+              <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Inicio:</span>
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-black">{event.startTime}</span>
             </div>
           )}
 
-          {event.releaseTime && (
+          {event.endTime && (
             <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
               <Play size={14} className="text-emerald-500" />
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Liberado:</span>
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-black">{event.releaseTime}</span>
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Liberacao:</span>
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-black">{event.endTime}</span>
+            </div>
+          )}
+
+          {durationMinutes !== null && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700">
+              <Clock size={14} className="text-slate-500" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tempo:</span>
+              <span className="text-xs text-slate-700 dark:text-slate-200 font-black">{durationMinutes} min</span>
             </div>
           )}
 

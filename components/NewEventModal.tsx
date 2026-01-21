@@ -24,8 +24,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
   const [description, setDescription] = useState('');
   const [solution, setSolution] = useState('');
   const [impact, setImpact] = useState('');
-  const [downtime, setDowntime] = useState<string>('');
-  const [releaseTime, setReleaseTime] = useState<string>('');
+  const [startTime, setStartTime] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,8 +44,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
         setDescription(initialData.description);
         setSolution(initialData.solution || '');
         setImpact(initialData.impact || '');
-        setDowntime(initialData.downtime?.toString() || '');
-        setReleaseTime(initialData.releaseTime || '');
+        setStartTime(initialData.startTime || '');
+        setEndTime(initialData.endTime || '');
         setPhotos(initialData.photos || []);
       } else {
         // Reset to defaults for a new record
@@ -59,8 +59,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
         setDescription('');
         setSolution('');
         setImpact('');
-        setDowntime('');
-        setReleaseTime('');
+        setStartTime('');
+        setEndTime('');
         setPhotos([]);
       }
     }
@@ -89,6 +89,19 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
                                category === EventCategory.PERIFERICOS || 
                                category === EventCategory.MAQUINA;
 
+  const getDurationMinutes = (start: string, end: string) => {
+    if (!start || !end) return null;
+    const [startHours, startMinutes] = start.split(':').map(Number);
+    const [endHours, endMinutes] = end.split(':').map(Number);
+    if ([startHours, startMinutes, endHours, endMinutes].some(Number.isNaN)) return null;
+    const startTotal = startHours * 60 + startMinutes;
+    const endTotal = endHours * 60 + endMinutes;
+    const diff = endTotal - startTotal;
+    return diff >= 0 ? diff : diff + 24 * 60;
+  };
+
+  const durationMinutes = getDurationMinutes(startTime, endTime);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!category) return;
@@ -104,8 +117,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
       description, 
       solution, 
       impact, 
-      downtime: downtime ? parseInt(downtime) : 0,
-      releaseTime: releaseTime || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
       photos 
     });
     
@@ -157,25 +170,29 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
                 className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
               />
               {line.trim() && (
-                <div className="pt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div>
-                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Equipamento</label>
-                    <input 
-                      type="text" 
-                      placeholder="Ex: Laser 04"
-                      value={equipment}
-                      onChange={(e) => setEquipment(e.target.value)}
-                      className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                    />
+                <div className="pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Equipamento</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ex: Laser 04"
+                        value={equipment}
+                        onChange={(e) => setEquipment(e.target.value)}
+                        className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Produto</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ex: Produto X"
+                        value={product}
+                        onChange={(e) => setProduct(e.target.value)}
+                        className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                      />
+                    </div>
                   </div>
-                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Produto</label>
-                  <input 
-                    type="text" 
-                    placeholder="Ex: Produto X"
-                    value={product}
-                    onChange={(e) => setProduct(e.target.value)}
-                    className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                  />
                 </div>
               )}
             </div>
@@ -224,47 +241,56 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
               </div>
             </div>
 
-            {isTechnicalCategory ? (
-              <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
-                <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                   <Search size={14} className="text-indigo-400" /> Modelo / Tipo de {category}
-                </label>
-                <input 
-                  type="text" 
-                  placeholder={`Qual ${category.toLowerCase()}?`}
-                  value={equipmentSubtype}
-                  onChange={(e) => setEquipmentSubtype(e.target.value)}
-                  required
-                  className="w-full px-5 py-4 bg-indigo-50/30 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-indigo-200 dark:placeholder:text-indigo-900/40"
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+            <div className="space-y-4">
+              {isTechnicalCategory && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    <Clock size={14} className="text-red-400" /> Parada (min)
+                     <Search size={14} className="text-indigo-400" /> Modelo / Tipo de {category}
                   </label>
                   <input 
-                    type="number" 
-                    placeholder="0"
-                    value={downtime}
-                    onChange={(e) => setDowntime(e.target.value)}
-                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                    type="text" 
+                    placeholder={`Qual ${category.toLowerCase()}?`}
+                    value={equipmentSubtype}
+                    onChange={(e) => setEquipmentSubtype(e.target.value)}
+                    required
+                    className="w-full px-5 py-4 bg-indigo-50/30 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-indigo-200 dark:placeholder:text-indigo-900/40"
                   />
                 </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    <Play size={14} className="text-emerald-500" /> Liberação
+                    <Clock size={14} className="text-amber-500" /> Inicio do Atendimento
                   </label>
                   <input 
                     type="time" 
-                    value={releaseTime}
-                    onChange={(e) => setReleaseTime(e.target.value)}
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
                     className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                    <Play size={14} className="text-emerald-500" /> Liberacao do Posto
+                  </label>
+                  <input 
+                    type="time" 
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700"
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tempo de Atuacao (min)</label>
+                  <input
+                    type="text"
+                    value={durationMinutes !== null ? `${durationMinutes} min` : '--'}
+                    readOnly
+                    className="w-full px-5 py-4 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-500 dark:text-slate-400 transition-all outline-none font-bold"
+                  />
+                </div>
               </div>
-            )}
+            </div>
           </div>
 
           <div className="space-y-2">

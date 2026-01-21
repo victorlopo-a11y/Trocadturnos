@@ -58,8 +58,8 @@ export interface ShiftEvent {
   description: string;
   solution?: string;
   impact?: string;
-  downtime?: number;
-  releaseTime?: string;
+  startTime?: string;
+  endTime?: string;
   photos?: string[];
   equipmentSubtype?: string;
   editCount?: number;

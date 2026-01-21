@@ -25,6 +25,17 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, can
   if (!event) return null;
 
   const meta = EVENT_METADATA[event.category];
+  const getDurationMinutes = (start?: string, end?: string) => {
+    if (!start || !end) return null;
+    const [startHours, startMinutes] = start.split(':').map(Number);
+    const [endHours, endMinutes] = end.split(':').map(Number);
+    if ([startHours, startMinutes, endHours, endMinutes].some(Number.isNaN)) return null;
+    const startTotal = startHours * 60 + startMinutes;
+    const endTotal = endHours * 60 + endMinutes;
+    const diff = endTotal - startTotal;
+    return diff >= 0 ? diff : diff + 24 * 60;
+  };
+  const durationMinutes = getDurationMinutes(event.startTime, event.endTime);
 
   const handleSendComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,9 +93,11 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, can
                 <InfoItem icon={<Layout size={16} />} label="Linha" value={event.line} />
                 {event.equipment && <InfoItem icon={<Layout size={16} />} label="Equipamento" value={event.equipment} />}
                 {event.product && <InfoItem icon={<Layout size={16} />} label="Produto" value={event.product} />}
-                <InfoItem icon={<Clock size={16} />} label="Horário" value={format(event.timestamp, "HH:mm")} />
-                {event.downtime !== undefined && event.downtime > 0 && <InfoItem icon={<Clock size={16} />} label="Parada" value={`${event.downtime} min`} color="text-red-500" />}
-                {event.releaseTime ? <InfoItem icon={<Play size={16} />} label="Liberação" value={event.releaseTime} color="text-emerald-500" /> : event.equipmentSubtype && <InfoItem icon={<Search size={16} />} label="Modelo" value={event.equipmentSubtype} />}
+                <InfoItem icon={<Clock size={16} />} label="Horario" value={format(event.timestamp, "HH:mm")} />
+                {event.startTime && <InfoItem icon={<Clock size={16} />} label="Inicio" value={event.startTime} color="text-amber-500" />}
+                {event.endTime && <InfoItem icon={<Play size={16} />} label="Liberacao" value={event.endTime} color="text-emerald-500" />}
+                {durationMinutes !== null && <InfoItem icon={<Clock size={16} />} label="Tempo" value={`${durationMinutes} min`} color="text-slate-500" />}
+                {event.equipmentSubtype && <InfoItem icon={<Search size={16} />} label="Modelo" value={event.equipmentSubtype} />}
               </div>
 
               <Section title="Descrição" icon={<FileText size={16} />}>
@@ -135,8 +148,8 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, canEdit, can
                           {entry.prev.description && <p><span className="font-bold">Descricao:</span> {entry.prev.description}</p>}
                           {entry.prev.solution && <p><span className="font-bold">Solucao:</span> {entry.prev.solution}</p>}
                           {entry.prev.impact && <p><span className="font-bold">Impacto:</span> {entry.prev.impact}</p>}
-                          {entry.prev.downtime !== undefined && <p><span className="font-bold">Parada:</span> {entry.prev.downtime} min</p>}
-                          {entry.prev.releaseTime && <p><span className="font-bold">Liberacao:</span> {entry.prev.releaseTime}</p>}
+                          {entry.prev.startTime && <p><span className="font-bold">Inicio:</span> {entry.prev.startTime}</p>}
+                          {entry.prev.endTime && <p><span className="font-bold">Liberacao:</span> {entry.prev.endTime}</p>}
                           {entry.prev.line && <p><span className="font-bold">Linha:</span> {entry.prev.line}</p>}
                           {entry.prev.equipment && <p><span className="font-bold">Equipamento:</span> {entry.prev.equipment}</p>}
                           {entry.prev.product && <p><span className="font-bold">Produto:</span> {entry.prev.product}</p>}
