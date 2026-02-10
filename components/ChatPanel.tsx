@@ -30,6 +30,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
 
   const roomKey = activeTab === 'sector' ? `sector:${user.role}` : 'global';
   const roomLabel = activeTab === 'sector' ? `Setor: ${user.role}` : 'Todas as Engenharias';
+  const onlineLabel = activeTab === 'sector' ? 'Online no setor' : 'Online no global';
 
   const canClear = !!user.isDeveloper;
 
@@ -94,7 +95,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
           .filter((p: any) => p.id && p.name);
         const unique = new Map<string, { id: string; name: string; avatar?: string }>();
         users.forEach((u: any) => unique.set(u.id, u));
-        setOnlineUsers(Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name)));
+        const list = Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name));
+        const me = list.find((u) => u.id === user.id);
+        const others = list.filter((u) => u.id !== user.id);
+        setOnlineUsers(me ? [me, ...others] : others);
       });
 
     channel.subscribe(async (status) => {
@@ -256,7 +260,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
           </div>
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
             <Users size={14} />
-            {onlineUsers.length} online
+            {onlineUsers.length} {onlineLabel}
           </div>
         </div>
 
@@ -276,7 +280,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
                   />
                   <span className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-emerald-50 rounded-full" />
                 </div>
-                <span className="max-w-[140px] truncate">{u.name}</span>
+                <span className="max-w-[140px] truncate">
+                  {u.name}{u.id === user.id ? ' (Você)' : ''}
+                </span>
               </button>
             ))}
           </div>
