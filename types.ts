@@ -61,6 +61,9 @@ export interface ChatMessage {
   userName: string;
   text: string | null;
   attachments?: ChatAttachment[] | null;
+  replyToId?: string | null;
+  replyToUserName?: string | null;
+  replyToText?: string | null;
   createdAt: number;
 }
 

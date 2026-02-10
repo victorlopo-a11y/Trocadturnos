@@ -50,6 +50,7 @@ const App: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedShiftFilter, setSelectedShiftFilter] = useState<'Todos' | ShiftType>('Todos');
   const [showAllEvents, setShowAllEvents] = useState(false);
@@ -69,6 +70,24 @@ const App: React.FC = () => {
     if (user) loadInitialData();
     else setIsLoading(false);
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`chat-unread:${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
+        const msg: any = payload.new;
+        if (msg.userId === user.id) return;
+        if (msg.room === 'global' || (msg.room === 'sector' && msg.sector === user.role)) {
+          if (!isChatOpen) setChatUnread((prev) => prev + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, isChatOpen]);
 
   // Fechar menus ao clicar fora
   useEffect(() => {
@@ -442,7 +461,14 @@ const App: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <button onClick={loadInitialData} className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 transition-all"><RefreshCcw size={20} className={isLoading ? "animate-spin" : ""} /></button>
-          <button onClick={() => setIsChatOpen(true)} className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 transition-all"><MessageSquare size={20} /></button>
+          <button onClick={() => { setIsChatOpen(true); setChatUnread(0); }} className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 transition-all relative">
+            <MessageSquare size={20} />
+            {chatUnread > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white text-[8px] font-black flex items-center justify-center rounded-full">
+                {chatUnread > 9 ? '9+' : chatUnread}
+              </span>
+            )}
+          </button>
           <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
           
           <div className="relative" ref={notificationRef}>
@@ -574,7 +600,14 @@ const App: React.FC = () => {
       />
       
       <AdminPanel isOpen={isAdminPanelOpen} onClose={() => setIsAdminPanelOpen(false)} />
-      {user && <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} user={user} />}
+      {user && (
+        <ChatPanel
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          user={user}
+          onClearUnread={() => setChatUnread(0)}
+        />
+      )}
     </div>
   );
 };

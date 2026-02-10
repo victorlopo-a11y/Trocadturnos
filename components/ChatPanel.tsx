@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { X as CloseIcon, Send, Image as ImageIcon, FileText, Users, Trash2 } from 'lucide-react';
+import { X as CloseIcon, Send, Image as ImageIcon, FileText, Users, Trash2, CornerUpLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import { supabase } from '../supabaseClient';
@@ -9,6 +9,7 @@ interface ChatPanelProps {
   isOpen: boolean;
   onClose: () => void;
   user: User;
+  onClearUnread?: () => void;
 }
 
 type ChatTab = 'sector' | 'global';
@@ -24,6 +25,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const roomKey = activeTab === 'sector' ? `sector:${user.role}` : 'global';
@@ -63,6 +65,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
   useEffect(() => {
     if (!isOpen) return;
     loadMessages();
+    onClearUnread?.();
   }, [isOpen, activeTab]);
 
   useEffect(() => {
@@ -151,13 +154,19 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
         userName: user.name,
         text: text.trim() ? text.trim() : null,
         attachments: attachments.length > 0 ? attachments : null,
+        replyToId: replyTarget?.id || null,
+        replyToUserName: replyTarget?.userName || null,
+        replyToText: replyTarget?.text || null,
         createdAt: Date.now()
       };
 
+      setMessages((prev) => [...prev, payload]);
+      setTimeout(scrollToBottom, 20);
       const { error } = await supabase.from('chat_messages').insert([payload]);
       if (error) throw error;
       setText('');
       setFiles([]);
+      setReplyTarget(null);
     } catch (err: any) {
       const msg = err?.message || 'Erro ao enviar mensagem.';
       alert(msg);
@@ -180,6 +189,32 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
   };
 
   const visibleMessages = useMemo(() => messages, [messages]);
+
+  const colorPalette = [
+    { bg: 'bg-indigo-600 text-white', light: 'bg-indigo-50 text-indigo-700' },
+    { bg: 'bg-emerald-600 text-white', light: 'bg-emerald-50 text-emerald-700' },
+    { bg: 'bg-rose-600 text-white', light: 'bg-rose-50 text-rose-700' },
+    { bg: 'bg-amber-500 text-white', light: 'bg-amber-50 text-amber-800' },
+    { bg: 'bg-sky-600 text-white', light: 'bg-sky-50 text-sky-700' },
+    { bg: 'bg-violet-600 text-white', light: 'bg-violet-50 text-violet-700' }
+  ];
+
+  const getUserColor = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+    const idx = Math.abs(hash) % colorPalette.length;
+    return colorPalette[idx];
+  };
+
+  const renderText = (value: string) => {
+    const parts = value.split(/(@[^@\s]+)/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith('@')) {
+        return <span key={idx} className="font-black text-amber-200">{part}</span>;
+      }
+      return <span key={idx}>{part}</span>;
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -228,7 +263,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
         {onlineUsers.length > 0 && (
           <div className="px-6 pt-2 flex flex-wrap gap-2">
             {onlineUsers.map((u) => (
-              <div key={u.id} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest">
+              <button
+                key={u.id}
+                onClick={() => setText((prev) => `${prev.trim()} @${u.name} `)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest"
+                title="Mencionar"
+              >
                 <div className="relative">
                   <img
                     src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`}
@@ -237,7 +277,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
                   <span className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-emerald-50 rounded-full" />
                 </div>
                 <span className="max-w-[140px] truncate">{u.name}</span>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -249,13 +289,31 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
           {!isLoading && visibleMessages.length === 0 && (
             <div className="text-center text-xs text-slate-400">Sem mensagens ainda.</div>
           )}
-          {visibleMessages.map((msg) => (
+          {visibleMessages.map((msg) => {
+            const color = getUserColor(msg.userId);
+            const isMine = msg.userId === user.id;
+            return (
             <div key={msg.id} className={`flex ${msg.userId === user.id ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm shadow-sm ${msg.userId === user.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'}`}>
-                <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                  {msg.userName}
+              <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm shadow-sm ${isMine ? color.bg : color.light}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                    {msg.userName}
+                  </div>
+                  <button
+                    onClick={() => setReplyTarget(msg)}
+                    className="text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100"
+                    title="Responder"
+                  >
+                    <CornerUpLeft size={12} />
+                  </button>
                 </div>
-                {msg.text && <div className="mt-1 whitespace-pre-wrap">{msg.text}</div>}
+                {msg.replyToUserName && (
+                  <div className="mt-2 rounded-xl bg-white/20 px-3 py-2 text-[11px]">
+                    <div className="font-black uppercase tracking-widest opacity-70">{msg.replyToUserName}</div>
+                    <div className="truncate opacity-80">{msg.replyToText || 'Arquivo'}</div>
+                  </div>
+                )}
+                {msg.text && <div className="mt-2 whitespace-pre-wrap">{renderText(msg.text)}</div>}
                 {msg.attachments && msg.attachments.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {msg.attachments.map((att) => (
@@ -264,7 +322,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
                         href={att.url}
                         target="_blank"
                         rel="noreferrer"
-                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold ${msg.userId === user.id ? 'bg-white/20' : 'bg-white dark:bg-slate-900'}`}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold ${isMine ? 'bg-white/20' : 'bg-white dark:bg-slate-900'}`}
                       >
                         {att.type.startsWith('image/') ? <ImageIcon size={14} /> : <FileText size={14} />}
                         <span className="truncate">{att.name}</span>
@@ -277,7 +335,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
 
         <div className="border-t dark:border-slate-800 px-6 py-4 bg-slate-50/70 dark:bg-slate-900">
@@ -296,6 +354,16 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+          {replyTarget && (
+            <div className="mb-3 flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-amber-50 text-amber-900 text-xs font-bold">
+              <div className="truncate">
+                Respondendo a {replyTarget.userName}: {replyTarget.text || 'Arquivo'}
+              </div>
+              <button onClick={() => setReplyTarget(null)} className="text-amber-700 hover:text-amber-900">
+                <CloseIcon size={12} />
+              </button>
             </div>
           )}
           <div className="flex items-center gap-3">
