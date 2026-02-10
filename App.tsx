@@ -85,7 +85,7 @@ const App: React.FC = () => {
   const fetchEvents = async () => {
     if (!user) return;
     let query = supabase
-      .from('events')
+      .from('eventos')
       .select('*, comments (*)')
       .order('timestamp', { ascending: false });
 
@@ -101,7 +101,7 @@ const App: React.FC = () => {
   const fetchNotifications = async () => {
     if (!user) return;
     let query = supabase
-      .from('notifications')
+      .from('notificações')
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(50);
@@ -120,7 +120,7 @@ const App: React.FC = () => {
     if (!user) return;
     try {
       let query = supabase
-        .from('notifications')
+        .from('notificações')
         .update({ isRead: true })
         .eq('isRead', false);
 
@@ -141,7 +141,7 @@ const App: React.FC = () => {
     if (!user) return;
     if (!confirm("Deseja limpar o hist?rico de notifica??es?")) return;
     try {
-      let query = supabase.from('notifications').delete().neq('id', '0');
+      let query = supabase.from('notificações').delete().neq('id', '0');
 
       if (!user.isDeveloper) {
         query = query.eq('userId', user.id);
@@ -219,7 +219,7 @@ const App: React.FC = () => {
         editHistory: [...(eventToEdit.editHistory || []), historyEntry]
       };
       try {
-        const { error } = await supabase.from('events').update(updatePayload).eq('id', eventToEdit.id);
+        const { error } = await supabase.from('eventos').update(updatePayload).eq('id', eventToEdit.id);
         if (error) throw error;
         setEvents(prev => prev.map(e => e.id === eventToEdit.id ? { ...e, ...updatePayload } : e));
         const changedFields = getChangedFields(eventToEdit, eventData);
@@ -234,7 +234,7 @@ const App: React.FC = () => {
             audience: 'dev',
             eventId: eventToEdit.id
           };
-          await supabase.from('notifications').insert([editNotification]);
+          await supabase.from('notificações').insert([editNotification]);
           if (user.isDeveloper) {
             setNotifications(prev => [editNotification as AppNotification, ...prev]);
           }
@@ -257,7 +257,7 @@ const App: React.FC = () => {
 
       try {
         // 1. Salvar Evento
-        const { error: eventError } = await supabase.from('events').insert([newEvent]);
+        const { error: eventError } = await supabase.from('eventos').insert([newEvent]);
         if (eventError) throw eventError;
 
         // 2. Criar Notificação para outros usuários
@@ -270,7 +270,7 @@ const App: React.FC = () => {
           category: eventData.category
         };
         
-        await supabase.from('notifications').insert([newNotification]);
+        await supabase.from('notificações').insert([newNotification]);
         
         setEvents(prev => [{...newEvent, comments: []}, ...prev]);
         setNotifications(prev => [newNotification as AppNotification, ...prev]);
@@ -294,8 +294,8 @@ const App: React.FC = () => {
     if (!confirm("Excluir permanentemente este relatório?")) return;
 
     try {
-      await supabase.from('comments').delete().eq('eventId', id);
-      const { error } = await supabase.from('events').delete().eq('id', id);
+      await supabase.from('comentários').delete().eq('eventId', id);
+      const { error } = await supabase.from('eventos').delete().eq('id', id);
       if (error) throw error;
       
       setEvents(prev => prev.filter(e => e.id !== id));
@@ -310,7 +310,7 @@ const App: React.FC = () => {
         audience: 'dev',
         eventId: event.id
       };
-      await supabase.from('notifications').insert([deleteNotification]);
+      await supabase.from('notificações').insert([deleteNotification]);
       if (user.isDeveloper) {
         setNotifications(prev => [deleteNotification as AppNotification, ...prev]);
       }
@@ -324,7 +324,7 @@ const App: React.FC = () => {
     if (!user) return;
     const targetEvent = events.find(ev => ev.id === eventId);
     const newComment = { id: crypto.randomUUID(), userId: user.id, userName: user.name, text, timestamp: Date.now() };
-    const { error } = await supabase.from('comments').insert([{ ...newComment, eventId }]);
+    const { error } = await supabase.from('comentários').insert([{ ...newComment, eventId }]);
     if (!error) {
       setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, comments: [...(ev.comments || []), newComment as Comment] } : ev));
     }
@@ -341,7 +341,7 @@ const App: React.FC = () => {
         eventId
       };
 
-      await supabase.from('notifications').insert([newNotification]);
+      await supabase.from('notificações').insert([newNotification]);
       if (targetEvent.userId === user.id) {
         setNotifications(prev => [newNotification as AppNotification, ...prev]);
       }
@@ -360,7 +360,7 @@ const App: React.FC = () => {
 
     const pingBackend = async () => {
       const { error } = await supabase
-        .from('events')
+        .from('eventos')
         .select('id')
         .limit(1);
       if (error && isActive) {
