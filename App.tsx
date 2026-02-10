@@ -54,6 +54,14 @@ const App: React.FC = () => {
 
   const notificationRef = useRef<HTMLDivElement>(null);
 
+  const getSupabaseErrorMessage = (err: any) => {
+    if (!err) return 'Erro desconhecido';
+    if (typeof err === 'string') return err;
+    if (err.message) return err.message;
+    if (err.error?.message) return err.error.message;
+    try { return JSON.stringify(err); } catch { return 'Erro desconhecido'; }
+  };
+
   useEffect(() => {
     if (user) loadInitialData();
     else setIsLoading(false);
@@ -241,7 +249,9 @@ const App: React.FC = () => {
         }
         setEventToEdit(null);
         alert('Relatório atualizado com sucesso!');
-      } catch (err) { alert('Erro ao atualizar.'); }
+      } catch (err) {
+        alert(`Erro ao atualizar: ${getSupabaseErrorMessage(err)}`);
+      }
     } else {
       const eventId = crypto.randomUUID();
       const newEvent = {
@@ -275,9 +285,9 @@ const App: React.FC = () => {
         setEvents(prev => [{...newEvent, comments: []}, ...prev]);
         setNotifications(prev => [newNotification as AppNotification, ...prev]);
         
-      } catch (err) { 
+      } catch (err) {
         console.error(err);
-        alert('Erro ao salvar. Verifique se as tabelas existem.'); 
+        alert(`Erro ao salvar: ${getSupabaseErrorMessage(err)}`);
       }
     }
   };
@@ -316,7 +326,7 @@ const App: React.FC = () => {
       }
       alert("Relatorio excluido.");
     } catch (err) {
-      alert("Erro ao excluir.");
+      alert(`Erro ao excluir: ${getSupabaseErrorMessage(err)}`);
     }
   };
 
