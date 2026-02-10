@@ -8,12 +8,22 @@ interface LoginProps {
   onLogin: (user: User) => void;
 }
 
+const SECTORS = [
+  'Teste',
+  'Processos',
+  'Setup',
+  'Automação',
+  'Aplicação',
+  'Produto',
+  'Qualidade'
+];
+
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [sector, setSector] = useState('Setup Engenharia');
+  const [sector, setSector] = useState('Processos');
   
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,7 +116,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <Settings size={32} />
           </div>
           <h1 className="text-2xl font-black text-[#1e293b] dark:text-white tracking-tighter">ENG.CONTROL</h1>
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Setup & Processos</p>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Engenharias</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl p-8 border border-slate-50 dark:border-slate-800 transition-all">
@@ -166,9 +176,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     onChange={(e) => setSector(e.target.value)}
                     className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border border-[#10b981] rounded-xl dark:text-white outline-none focus:ring-2 focus:ring-[#10b981] appearance-none transition-all font-bold text-slate-900"
                   >
-                    <option value="Setup Engenharia">Setup Engenharia</option>
-                    <option value="Engenharia de Processos">Engenharia de Processos</option>
-                    <option value="Manutenção / Máquinas">Manutenção / Máquinas</option>
+                    {SECTORS.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
                 </div>
