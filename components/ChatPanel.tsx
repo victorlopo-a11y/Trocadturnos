@@ -17,7 +17,7 @@ type ChatTab = 'sector' | 'global';
 const MAX_FILES = 4;
 const MAX_FILE_SIZE_MB = 8;
 
-const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
+const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user, onClearUnread }) => {
   const [activeTab, setActiveTab] = useState<ChatTab>('sector');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
