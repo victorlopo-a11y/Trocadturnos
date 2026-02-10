@@ -19,7 +19,7 @@ const MAX_FILE_SIZE_MB = 8;
 const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
   const [activeTab, setActiveTab] = useState<ChatTab>('sector');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -85,16 +85,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
       })
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        const names = Object.values(state)
+        const users = Object.values(state)
           .flat()
-          .map((p: any) => p.userName)
-          .filter(Boolean);
-        setOnlineUsers(Array.from(new Set(names)).sort());
+          .map((p: any) => ({ id: p.userId, name: p.userName, avatar: p.avatar }))
+          .filter((p: any) => p.id && p.name);
+        const unique = new Map<string, { id: string; name: string; avatar?: string }>();
+        users.forEach((u: any) => unique.set(u.id, u));
+        setOnlineUsers(Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name)));
       });
 
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        await channel.track({ userName: user.name });
+        await channel.track({ userId: user.id, userName: user.name, avatar: user.avatar });
       }
     });
 
@@ -109,6 +111,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
     const limited = selected.slice(0, MAX_FILES);
     const valid = limited.filter((file) => file.size / (1024 * 1024) <= MAX_FILE_SIZE_MB);
     setFiles(valid);
+  };
+
+  const removeFile = (name: string) => {
+    setFiles((prev) => prev.filter((f) => f.name !== name));
   };
 
   const uploadFiles = async () => {
@@ -152,6 +158,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
       if (error) throw error;
       setText('');
       setFiles([]);
+    } catch (err: any) {
+      const msg = err?.message || 'Erro ao enviar mensagem.';
+      alert(msg);
     } finally {
       setIsSending(false);
     }
@@ -216,6 +225,23 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
           </div>
         </div>
 
+        {onlineUsers.length > 0 && (
+          <div className="px-6 pt-2 flex flex-wrap gap-2">
+            {onlineUsers.map((u) => (
+              <div key={u.id} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest">
+                <div className="relative">
+                  <img
+                    src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                  <span className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-emerald-50 rounded-full" />
+                </div>
+                <span className="max-w-[140px] truncate">{u.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {isLoading && (
             <div className="text-center text-xs text-slate-400">Carregando mensagens...</div>
@@ -261,6 +287,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user }) => {
                 <div key={file.name} className="px-3 py-1.5 bg-white dark:bg-slate-800 rounded-xl text-[10px] font-bold text-slate-500 flex items-center gap-2">
                   {file.type.startsWith('image/') ? <ImageIcon size={12} /> : <FileText size={12} />}
                   <span className="max-w-[220px] truncate">{file.name}</span>
+                  <button
+                    onClick={() => removeFile(file.name)}
+                    className="ml-1 text-slate-400 hover:text-red-500"
+                    title="Remover"
+                  >
+                    <CloseIcon size={12} />
+                  </button>
                 </div>
               ))}
             </div>
