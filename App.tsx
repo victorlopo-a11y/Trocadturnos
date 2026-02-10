@@ -17,7 +17,8 @@ import {
   RefreshCcw,
   ShieldAlert,
   Check,
-  X as CloseIcon
+  X as CloseIcon,
+  MessageSquare
 } from 'lucide-react';
 import { ShiftEvent, User, ShiftType, EventCategory, AppNotification, Comment } from './types';
 import { format } from 'date-fns';
@@ -27,6 +28,7 @@ import NewEventModal from './components/NewEventModal';
 import EventCard from './components/EventCard';
 import EventDetailModal from './components/EventDetailModal';
 import AdminPanel from './components/AdminPanel';
+import ChatPanel from './components/ChatPanel';
 import { EVENT_METADATA } from './constants';
 import { supabase } from './supabaseClient';
 
@@ -47,6 +49,7 @@ const App: React.FC = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedShiftFilter, setSelectedShiftFilter] = useState<'Todos' | ShiftType>('Todos');
   const [showAllEvents, setShowAllEvents] = useState(false);
@@ -439,6 +442,7 @@ const App: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <button onClick={loadInitialData} className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 transition-all"><RefreshCcw size={20} className={isLoading ? "animate-spin" : ""} /></button>
+          <button onClick={() => setIsChatOpen(true)} className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 transition-all"><MessageSquare size={20} /></button>
           <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
           
           <div className="relative" ref={notificationRef}>
@@ -570,6 +574,7 @@ const App: React.FC = () => {
       />
       
       <AdminPanel isOpen={isAdminPanelOpen} onClose={() => setIsAdminPanelOpen(false)} />
+      {user && <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} user={user} />}
     </div>
   );
 };

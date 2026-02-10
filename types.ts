@@ -46,6 +46,24 @@ export interface Comment {
   timestamp: number;
 }
 
+export interface ChatAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  room: 'global' | 'sector';
+  sector?: string | null;
+  userId: string;
+  userName: string;
+  text: string | null;
+  attachments?: ChatAttachment[] | null;
+  createdAt: number;
+}
+
 export interface ShiftEvent {
   id: string;
   date: string;
