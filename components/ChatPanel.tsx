@@ -182,7 +182,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user, onClearUnr
   const handleClearChat = async () => {
     if (!canClear) return;
     if (!confirm('Deseja limpar este chat?')) return;
-    let query = supabase.from('chat_messages').delete().neq('id', '0');
+    let query = supabase.from('chat_messages').delete();
     if (activeTab === 'sector') {
       query = query.eq('room', 'sector').eq('sector', user.role);
     } else {
