@@ -189,7 +189,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, user, onClearUnr
       query = query.eq('room', 'global');
     }
     const { error } = await query;
-    if (!error) setMessages([]);
+    if (error) {
+      alert(error.message || 'Erro ao limpar chat.');
+      return;
+    }
+    setMessages([]);
   };
 
   const visibleMessages = useMemo(() => messages, [messages]);
