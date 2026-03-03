@@ -4,7 +4,6 @@ import {
   Bell, 
   Settings as SettingsIcon, 
   Plus, 
-  Calendar as CalendarIcon,
   Filter,
   ClipboardList,
   AlertTriangle,
@@ -18,9 +17,12 @@ import {
   ShieldAlert,
   Check,
   X as CloseIcon,
-  MessageSquare
+  MessageSquare,
+  Gauge,
+  TimerReset,
+  ListFilter
 } from 'lucide-react';
-import { ShiftEvent, User, ShiftType, EventCategory, AppNotification, Comment } from './types';
+import { ShiftEvent, User, ShiftType, EventCategory, AppNotification, Comment, EventPriority, EventStatus } from './types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import Login from './components/Login';
@@ -53,6 +55,9 @@ const App: React.FC = () => {
   const [chatUnread, setChatUnread] = useState(0);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedShiftFilter, setSelectedShiftFilter] = useState<'Todos' | ShiftType>('Todos');
+  const [selectedLineFilter, setSelectedLineFilter] = useState('Todos');
+  const [selectedProductFilter, setSelectedProductFilter] = useState('Todos');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<'Todas' | EventCategory>('Todas');
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('eng_control_darkmode') === 'true');
 
@@ -204,6 +209,11 @@ const App: React.FC = () => {
       { key: 'equipment', label: 'equipamento' },
       { key: 'shift', label: 'turno' },
       { key: 'category', label: 'categoria' },
+      { key: 'priority', label: 'prioridade' },
+      { key: 'status', label: 'status' },
+      { key: 'lostPieces', label: 'pecas perdidas' },
+      { key: 'reworkCount', label: 'retrabalho' },
+      { key: 'downtimeMinutes', label: 'tempo parado' },
       { key: 'equipmentSubtype', label: 'modelo' },
       { key: 'photos', label: 'fotos' }
     ];
@@ -237,6 +247,11 @@ const App: React.FC = () => {
           equipment: eventToEdit.equipment,
           shift: eventToEdit.shift,
           category: eventToEdit.category,
+          priority: eventToEdit.priority,
+          status: eventToEdit.status,
+          lostPieces: eventToEdit.lostPieces,
+          reworkCount: eventToEdit.reworkCount,
+          downtimeMinutes: eventToEdit.downtimeMinutes,
           equipmentSubtype: eventToEdit.equipmentSubtype,
           photos: eventToEdit.photos
         }
@@ -380,6 +395,62 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateEventStatus = async (event: ShiftEvent, nextStatus: EventStatus) => {
+    if (!user) return;
+
+    const nowTime = format(new Date(), 'HH:mm');
+    const updatePayload: Partial<ShiftEvent> = {
+      status: nextStatus,
+      lastEditedBy: user.name,
+      lastEditedAt: Date.now(),
+      editCount: (event.editCount ?? 0) + 1,
+      editHistory: [
+        ...(event.editHistory || []),
+        {
+          editedBy: user.name,
+          editedAt: Date.now(),
+          prev: {
+            status: event.status,
+            startTime: event.startTime,
+            endTime: event.endTime,
+          },
+        },
+      ],
+    };
+
+    if (nextStatus === EventStatus.EM_ANDAMENTO && !event.startTime) {
+      updatePayload.startTime = nowTime;
+    }
+
+    if ((nextStatus === EventStatus.RESOLVIDO || nextStatus === EventStatus.ENCERRADO) && !event.endTime) {
+      updatePayload.endTime = nowTime;
+    }
+
+    try {
+      const { error } = await supabase.from('events').update(updatePayload).eq('id', event.id);
+      if (error) throw error;
+
+      setEvents((prev) => prev.map((item) => (item.id === event.id ? { ...item, ...updatePayload } : item)));
+
+      const notification = {
+        id: crypto.randomUUID(),
+        title: 'Status atualizado',
+        message: `${user.name} alterou "${event.title}" para ${nextStatus}.`,
+        timestamp: Date.now(),
+        isRead: false,
+        category: event.category,
+        audience: 'dev',
+        eventId: event.id,
+      };
+      await supabase.from('notifications').insert([notification]);
+      if (user.isDeveloper) {
+        setNotifications((prev) => [notification as AppNotification, ...prev]);
+      }
+    } catch (err) {
+      alert(`Erro ao atualizar status: ${getSupabaseErrorMessage(err)}`);
+    }
+  };
+
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
@@ -416,28 +487,45 @@ const App: React.FC = () => {
 
   const selectedEvent = useMemo(() => events.find(e => e.id === selectedEventId) || null, [events, selectedEventId]);
   const selectedEventEditCount = selectedEvent?.editCount ?? 0;
+  const isClosedEvent = selectedEvent?.status === EventStatus.ENCERRADO;
   const editLimitReached = !user?.isDeveloper && selectedEvent && selectedEvent.userId === user?.id && selectedEventEditCount >= 2;
-  const canEditEvent = !!user?.isDeveloper || (selectedEvent && selectedEvent.userId === user?.id && !editLimitReached);
+  const canEditEvent = !isClosedEvent && (!!user?.isDeveloper || (selectedEvent && selectedEvent.userId === user?.id && !editLimitReached));
   const canDeleteEvent = !!user?.isDeveloper;
-  const editDisabledReason = editLimitReached ? 'Limite de 2 edições por evento atingido' : undefined;
+  const editDisabledReason = isClosedEvent
+    ? 'Ocorrencia encerrada nao pode ser editada'
+    : editLimitReached
+      ? 'Limite de 2 edições por evento atingido'
+      : undefined;
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+  const lineOptions = useMemo(() => ['Todos', ...Array.from(new Set(events.map(e => e.line).filter(Boolean))).sort()], [events]);
+  const productOptions = useMemo(() => ['Todos', ...Array.from(new Set(events.map(e => e.product).filter(Boolean) as string[])).sort()], [events]);
   const filteredEvents = useMemo(() => {
     const matchesShift = (event: ShiftEvent) => selectedShiftFilter === 'Todos' || event.shift === selectedShiftFilter;
+    const matchesLine = (event: ShiftEvent) => selectedLineFilter === 'Todos' || event.line === selectedLineFilter;
+    const matchesProduct = (event: ShiftEvent) => selectedProductFilter === 'Todos' || event.product === selectedProductFilter;
+    const matchesCategory = (event: ShiftEvent) => selectedCategoryFilter === 'Todas' || event.category === selectedCategoryFilter;
     if (showAllEvents && user?.isDeveloper) {
-      return events.filter(matchesShift);
+      return events.filter(e => matchesShift(e) && matchesLine(e) && matchesProduct(e) && matchesCategory(e));
     }
-    return events.filter(e => matchesShift(e) && e.date === selectedDate);
-  }, [events, selectedShiftFilter, selectedDate, showAllEvents, user]);
+    return events.filter(e => matchesShift(e) && matchesLine(e) && matchesProduct(e) && matchesCategory(e) && e.date === selectedDate);
+  }, [events, selectedShiftFilter, selectedLineFilter, selectedProductFilter, selectedCategoryFilter, selectedDate, showAllEvents, user]);
 
   const stats = useMemo(() => {
-    const today = events.filter(e => e.date === selectedDate);
+    const totalDowntime = filteredEvents.reduce((acc, event) => acc + (event.downtimeMinutes || 0), 0);
+    const totalLostPieces = filteredEvents.reduce((acc, event) => acc + (event.lostPieces || 0), 0);
+    const averageDowntime = filteredEvents.length > 0 ? Math.round(totalDowntime / filteredEvents.length) : 0;
     return {
-      total: today.length,
-      falhas: today.filter(e => e.category === EventCategory.FALHA).length,
-      adm: today.filter(e => e.shift === ShiftType.ADM).length,
-      segundo: today.filter(e => e.shift === ShiftType.SEGUNDO).length
+      total: filteredEvents.length,
+      falhas: filteredEvents.filter(e => e.category === EventCategory.FALHA).length,
+      abertas: filteredEvents.filter(e => (e.status || EventStatus.ABERTO) === EventStatus.ABERTO).length,
+      criticas: filteredEvents.filter(e => e.priority === EventPriority.CRITICA).length,
+      emAndamento: filteredEvents.filter(e => e.status === EventStatus.EM_ANDAMENTO).length,
+      segundo: filteredEvents.filter(e => e.shift === ShiftType.SEGUNDO).length,
+      tempoParado: totalDowntime,
+      mediaParada: averageDowntime,
+      pecasPerdidas: totalLostPieces
     };
-  }, [events, selectedDate]);
+  }, [filteredEvents]);
 
   if (!user) return <Login onLogin={setUser} />;
 
@@ -544,10 +632,17 @@ const App: React.FC = () => {
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <StatCard title="Total Hoje" value={stats.total} icon={<ClipboardList size={22} />} color="text-indigo-600" bgColor="bg-indigo-50" />
-          <StatCard title="Falhas" value={stats.falhas} icon={<AlertTriangle size={22} />} color="text-red-600" bgColor="bg-red-50" />
-          <StatCard title="ADM" value={stats.adm} icon={<Sun size={22} />} color="text-orange-500" bgColor="bg-orange-50" />
+          <StatCard title="Criticas" value={stats.criticas} icon={<AlertTriangle size={22} />} color="text-red-600" bgColor="bg-red-50" />
+          <StatCard title="Em Aberto" value={stats.abertas} icon={<Gauge size={22} />} color="text-amber-600" bgColor="bg-amber-50" />
           <StatCard title="2º Turno" value={stats.segundo} icon={<Moon size={22} />} color="text-indigo-800" bgColor="bg-indigo-50" />
         </div>
+
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+          <OperationalCard title="Falhas no filtro" value={stats.falhas} helper="Ocorrencias de falha" />
+          <OperationalCard title="Em andamento" value={stats.emAndamento} helper="Pendencias ativas" />
+          <OperationalCard title="Media de parada" value={`${stats.mediaParada} min`} helper="Por registro filtrado" />
+          <OperationalCard title="Pecas perdidas" value={stats.pecasPerdidas} helper="Impacto acumulado" accent="text-rose-600" />
+        </section>
 
         <section className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div className="flex flex-wrap items-center gap-4">
@@ -566,6 +661,9 @@ const App: React.FC = () => {
               <FilterChip active={selectedShiftFilter === ShiftType.SEGUNDO} onClick={() => setSelectedShiftFilter(ShiftType.SEGUNDO)}>2º</FilterChip>
             </div>
           </div>
+          <SelectFilter value={selectedLineFilter} onChange={setSelectedLineFilter} options={lineOptions} defaultLabel="Linha: Todas" />
+          <SelectFilter value={selectedProductFilter} onChange={setSelectedProductFilter} options={productOptions} defaultLabel="Produto: Todos" />
+          <SelectFilter value={selectedCategoryFilter} onChange={(value: string) => setSelectedCategoryFilter(value as 'Todas' | EventCategory)} options={['Todas', ...Object.values(EventCategory)]} defaultLabel="Categoria: Todas" />
           <button onClick={() => { setEventToEdit(null); setIsModalOpen(true); }} className="px-10 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center gap-2"><Plus size={20} /> Novo Registro</button>
         </section>
 
@@ -597,6 +695,7 @@ const App: React.FC = () => {
         onEdit={() => { if(selectedEvent) { setEventToEdit(selectedEvent); setIsModalOpen(true); setSelectedEventId(null); } }}
         onDelete={() => { if(selectedEvent) handleDeleteEvent(selectedEvent.id); }}
         onAddComment={handleAddComment}
+        onUpdateStatus={handleUpdateEventStatus}
       />
       
       <AdminPanel isOpen={isAdminPanelOpen} onClose={() => setIsAdminPanelOpen(false)} />
@@ -619,8 +718,29 @@ const StatCard = ({ title, value, icon, color, bgColor }: any) => (
   </div>
 );
 
+const OperationalCard = ({ title, value, helper, accent = 'text-slate-800 dark:text-white' }: any) => (
+  <div className="bg-white dark:bg-slate-800 rounded-[2rem] border dark:border-slate-800 p-6 shadow-sm">
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</p>
+    <p className={`mt-3 text-2xl font-black ${accent}`}>{value}</p>
+    <p className="mt-2 text-xs font-semibold text-slate-400">{helper}</p>
+  </div>
+);
+
 const FilterChip = ({ active, onClick, children }: any) => (
   <button onClick={onClick} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${active ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50 hover:text-indigo-600'}`}>{children}</button>
+);
+
+const SelectFilter = ({ value, onChange, options, defaultLabel }: any) => (
+  <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl">
+    <ListFilter size={16} className="text-slate-400" />
+    <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-transparent text-xs font-black text-slate-600 dark:text-slate-200 outline-none">
+      {options.map((option: string) => (
+        <option key={option} value={option}>
+          {option === 'Todos' || option === 'Todas' ? defaultLabel : option}
+        </option>
+      ))}
+    </select>
+  </div>
 );
 
 export default App;

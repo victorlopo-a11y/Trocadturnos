@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ShiftEvent } from '../types';
-import { EVENT_METADATA, SHIFT_METADATA } from '../constants';
+import { EVENT_METADATA, PRIORITY_METADATA, SHIFT_METADATA, STATUS_METADATA } from '../constants';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import { Clock, Play } from 'lucide-react';
@@ -14,6 +14,8 @@ interface EventCardProps {
 const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
   const meta = EVENT_METADATA[event.category];
   const shiftMeta = SHIFT_METADATA[event.shift];
+  const priorityMeta = event.priority ? PRIORITY_METADATA[event.priority] : null;
+  const statusMeta = event.status ? STATUS_METADATA[event.status] : null;
   const getDurationMinutes = (start?: string, end?: string) => {
     if (!start || !end) return null;
     const [startHours, startMinutes] = start.split(':').map(Number);
@@ -45,6 +47,16 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
             {event.category}
           </span>
           <span className="text-slate-200 dark:text-slate-700">•</span>
+          {event.priority && priorityMeta && (
+            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border ${priorityMeta.bgColor} ${priorityMeta.color} ${priorityMeta.borderColor}`}>
+              {event.priority}
+            </span>
+          )}
+          {event.status && statusMeta && (
+            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border ${statusMeta.bgColor} ${statusMeta.color} ${statusMeta.borderColor}`}>
+              {event.status}
+            </span>
+          )}
           <span className="text-xs font-bold text-slate-400">
             {format(event.timestamp, "HH:mm '·' d 'de' MMMM", { locale: ptBR })}
           </span>
@@ -103,6 +115,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
               <Clock size={14} className="text-slate-500" />
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tempo:</span>
               <span className="text-xs text-slate-700 dark:text-slate-200 font-black">{durationMinutes} min</span>
+            </div>
+          )}
+
+          {typeof event.lostPieces === 'number' && event.lostPieces > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-900/20 rounded-2xl border border-rose-100 dark:border-rose-900/30">
+              <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Peças:</span>
+              <span className="text-xs text-rose-600 dark:text-rose-400 font-black">{event.lostPieces}</span>
+            </div>
+          )}
+
+          {typeof event.downtimeMinutes === 'number' && event.downtimeMinutes > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
+              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Parada:</span>
+              <span className="text-xs text-indigo-600 dark:text-indigo-400 font-black">{event.downtimeMinutes} min</span>
             </div>
           )}
 

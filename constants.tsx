@@ -15,7 +15,7 @@ import {
   Monitor,
   Cpu
 } from 'lucide-react';
-import { EventCategory, ShiftType } from './types';
+import { EventCategory, EventPriority, EventStatus, ShiftType } from './types';
 
 export const EVENT_METADATA: Record<EventCategory, { icon: React.ReactNode, color: string, description: string, bgColor: string }> = {
   [EventCategory.FALHA]: {
@@ -92,5 +92,51 @@ export const SHIFT_METADATA: Record<ShiftType, { icon: React.ReactNode, color: s
   [ShiftType.TERCEIRO]: {
     icon: <Clock size={18} />,
     color: 'text-slate-700',
+  },
+};
+
+export const PRIORITY_METADATA: Record<EventPriority, { color: string, bgColor: string, borderColor: string }> = {
+  [EventPriority.BAIXA]: {
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
+  },
+  [EventPriority.MEDIA]: {
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+  },
+  [EventPriority.ALTA]: {
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-200',
+  },
+  [EventPriority.CRITICA]: {
+    color: 'text-red-700',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-red-200',
+  },
+};
+
+export const STATUS_METADATA: Record<EventStatus, { color: string, bgColor: string, borderColor: string }> = {
+  [EventStatus.ABERTO]: {
+    color: 'text-slate-700',
+    bgColor: 'bg-slate-100',
+    borderColor: 'border-slate-200',
+  },
+  [EventStatus.EM_ANDAMENTO]: {
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+  },
+  [EventStatus.RESOLVIDO]: {
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
+  },
+  [EventStatus.ENCERRADO]: {
+    color: 'text-violet-700',
+    bgColor: 'bg-violet-50',
+    borderColor: 'border-violet-200',
   },
 };

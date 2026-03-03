@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown, CheckCircle2, AlertCircle, Clock, Camera, Trash2, Image as ImageIcon, Play, Search } from 'lucide-react';
-import { ShiftType, EventCategory, ShiftEvent } from '../types';
+import { ShiftType, EventCategory, EventPriority, EventStatus, ShiftEvent } from '../types';
 import { EVENT_METADATA } from '../constants';
 
 interface NewEventModalProps {
@@ -19,11 +19,16 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
   const [product, setProduct] = useState('');
   const [equipment, setEquipment] = useState('');
   const [category, setCategory] = useState<EventCategory | null>(null);
+  const [priority, setPriority] = useState<EventPriority>(EventPriority.MEDIA);
+  const [status, setStatus] = useState<EventStatus>(EventStatus.ABERTO);
   const [equipmentSubtype, setEquipmentSubtype] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [solution, setSolution] = useState('');
   const [impact, setImpact] = useState('');
+  const [lostPieces, setLostPieces] = useState('');
+  const [reworkCount, setReworkCount] = useState('');
+  const [downtimeMinutes, setDowntimeMinutes] = useState('');
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [photos, setPhotos] = useState<string[]>([]);
@@ -39,11 +44,16 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
         setProduct(initialData.product || '');
         setEquipment(initialData.equipment || '');
         setCategory(initialData.category);
+        setPriority(initialData.priority || EventPriority.MEDIA);
+        setStatus(initialData.status || EventStatus.ABERTO);
         setEquipmentSubtype(initialData.equipmentSubtype || '');
         setTitle(initialData.title);
         setDescription(initialData.description);
         setSolution(initialData.solution || '');
         setImpact(initialData.impact || '');
+        setLostPieces(initialData.lostPieces?.toString() || '');
+        setReworkCount(initialData.reworkCount?.toString() || '');
+        setDowntimeMinutes(initialData.downtimeMinutes?.toString() || '');
         setStartTime(initialData.startTime || '');
         setEndTime(initialData.endTime || '');
         setPhotos(initialData.photos || []);
@@ -54,11 +64,16 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
         setProduct('');
         setEquipment('');
         setCategory(null);
+        setPriority(EventPriority.MEDIA);
+        setStatus(EventStatus.ABERTO);
         setEquipmentSubtype('');
         setTitle('');
         setDescription('');
         setSolution('');
         setImpact('');
+        setLostPieces('');
+        setReworkCount('');
+        setDowntimeMinutes('');
         setStartTime('');
         setEndTime('');
         setPhotos([]);
@@ -71,7 +86,7 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      Array.from(files).forEach(file => {
+      Array.from(files as FileList).forEach((file: File) => {
         const reader = new FileReader();
         reader.onloadend = () => {
           setPhotos(prev => [...prev, reader.result as string]);
@@ -112,11 +127,16 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
       product: product || undefined,
       equipment: equipment || undefined,
       category, 
+      priority,
+      status,
       equipmentSubtype: isTechnicalCategory ? equipmentSubtype : undefined,
       title, 
       description, 
       solution, 
       impact, 
+      lostPieces: lostPieces ? Number(lostPieces) : undefined,
+      reworkCount: reworkCount ? Number(reworkCount) : undefined,
+      downtimeMinutes: downtimeMinutes ? Number(downtimeMinutes) : undefined,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
       photos 
@@ -140,7 +160,7 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Turno</label>
               <div className="relative">
@@ -169,34 +189,36 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
                 required
                 className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
               />
-              {line.trim() && (
-                <div className="pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Equipamento</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ex: Laser 04"
-                        value={equipment}
-                        onChange={(e) => setEquipment(e.target.value)}
-                        className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Produto</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ex: Produto X"
-                        value={product}
-                        onChange={(e) => setProduct(e.target.value)}
-                        className="w-full mt-2 px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Produto</label>
+              <input 
+                type="text" 
+                placeholder="Ex: Produto X"
+                value={product}
+                onChange={(e) => setProduct(e.target.value)}
+                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+              />
             </div>
           </div>
+
+          {line.trim() && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Equipamento</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Laser 04"
+                    value={equipment}
+                    onChange={(e) => setEquipment(e.target.value)}
+                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -242,6 +264,42 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
             </div>
 
             <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Prioridade</label>
+                  <div className="relative">
+                    <select
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value as EventPriority)}
+                      className="w-full pl-5 pr-12 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white appearance-none transition-all outline-none font-bold text-slate-700"
+                    >
+                      {Object.values(EventPriority).map(item => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ChevronDown size={20} />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
+                  <div className="relative">
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as EventStatus)}
+                      className="w-full pl-5 pr-12 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white appearance-none transition-all outline-none font-bold text-slate-700"
+                    >
+                      {Object.values(EventStatus).map(item => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ChevronDown size={20} />
+                    </div>
+                  </div>
+                </div>
+              </div>
               {isTechnicalCategory && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
@@ -340,6 +398,36 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ isOpen, onClose, onSave, 
                 value={impact}
                 onChange={(e) => setImpact(e.target.value)}
                 className="w-full px-5 py-4 bg-amber-50/30 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 dark:text-amber-100 transition-all outline-none resize-none font-medium text-slate-600"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Quantidade Impactada</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="number"
+                min="0"
+                placeholder="Peças perdidas"
+                value={lostPieces}
+                onChange={(e) => setLostPieces(e.target.value)}
+                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+              />
+              <input
+                type="number"
+                min="0"
+                placeholder="Retrabalho"
+                value={reworkCount}
+                onChange={(e) => setReworkCount(e.target.value)}
+                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+              />
+              <input
+                type="number"
+                min="0"
+                placeholder="Tempo parado (min)"
+                value={downtimeMinutes}
+                onChange={(e) => setDowntimeMinutes(e.target.value)}
+                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300 dark:placeholder:text-slate-600"
               />
             </div>
           </div>

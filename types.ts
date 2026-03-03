@@ -18,6 +18,20 @@ export enum EventCategory {
   OUTROS = 'Outros'
 }
 
+export enum EventPriority {
+  BAIXA = 'Baixa',
+  MEDIA = 'Media',
+  ALTA = 'Alta',
+  CRITICA = 'Critica'
+}
+
+export enum EventStatus {
+  ABERTO = 'Aberto',
+  EM_ANDAMENTO = 'Em andamento',
+  RESOLVIDO = 'Resolvido',
+  ENCERRADO = 'Encerrado'
+}
+
 export interface User {
   id: string;
   name: string;
@@ -75,10 +89,15 @@ export interface ShiftEvent {
   product?: string;
   equipment?: string;
   category: EventCategory;
+  priority?: EventPriority;
+  status?: EventStatus;
   title: string;
   description: string;
   solution?: string;
   impact?: string;
+  lostPieces?: number;
+  reworkCount?: number;
+  downtimeMinutes?: number;
   startTime?: string;
   endTime?: string;
   photos?: string[];
